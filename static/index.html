@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .login-container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .form-input {
+            margin-bottom: 10px;
+        }
+        .form-input label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .form-input input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .form-input input[type="submit"] {
+            background-color: #5cb85c;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .form-input input[type="submit"]:hover {
+            background-color: #4cae4c;
+            margin:5px;
+        }
+        .additional-links {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 0.85em;
+        }
+        .additional-links a {
+            color: #5cb85c;
+            text-decoration: none;
+        }
+        .additional-links a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+<div class="login-container">
+    <h2>Login to Your Account</h2>
+    <form action="/login" method="post">
+        <div class="form-input">
+            <label for="username">Username/Email</label>
+            <input type="text" id="username" name="username" required>
+        </div>
+        <div class="form-input">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required>
+        </div>
+        <div class="form-input">
+            <input type="submit" value="Login">
+        </div>
+
+        <div class="additional-links">
+            <a href="register.html">Don't have an account? Register here</a>
+        </div>
+    </form>
+</div>
+</body>
+</html>
