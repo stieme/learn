@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Register Page</title>
+    <title>Forgot Password Page</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -13,7 +13,7 @@
             height: 100vh;
             margin: 0;
         }
-        .register-container {
+        .forgot-container {
             background-color: white;
             padding: 20px;
             border-radius: 5px;
@@ -57,27 +57,20 @@
     </style>
 </head>
 <body>
-<div class="register-container">
-    <h2>Register Your Account</h2>
-    <form action="/register" method="post">
+<div class="forgot-container">
+    <h2>Forgot Your Password?</h2>
+    <p>Enter your username to receive a password reset link.</p>
+    <form action="/forgot-password" method="post">
         <div class="form-input">
             <label for="username">Username</label>
             <input type="text" id="username" name="username" required>
         </div>
         <div class="form-input">
-            <label for="password">Password</label>
-            <input type="password" id="password" name="password" required>
-        </div>
-        <div class="form-input">
-            <label for="confirm_password">Confirm Password</label>
-            <input type="password" id="confirm_password" name="confirm_password" required>
-        </div>
-        <div class="form-input">
-            <input type="submit" value="Register">
+            <input type="submit" value="Send Reset Link">
         </div>
     </form>
     <div class="additional-links">
-        <a href="index.html">Already have an account? Login here</a>
+        <a href="index.html">Return to Login</a>
     </div>
 </div>
 </body>
