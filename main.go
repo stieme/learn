@@ -1,67 +1,59 @@
 package main
 
 import (
-	"database/sql"
 	"errors"
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 	"log"
 	"net/http"
 )
 
+// User struct 定义模型
 type User struct {
+	gorm.Model
 	Username string
 	Password string
 }
 
 func main() {
-	// 数据库连接,打开text数数据库
-	db, err := sql.Open("mysql", "root:as556564996@tcp(127.0.0.1:3306)/text")
+	// 数据库连接
+	dsn := "root:as556564996@tcp(127.0.0.1:3306)/text?charset=utf8mb4&parseTime=True&loc=Local"
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
-		log.Fatal("数据库链接出错: ", err) //没链接到就打印错误信息
+		log.Fatal("database connection failed: ", err)
 	}
 
-	err = db.Ping()
-	if err != nil {
-		log.Fatal("数据库未仍在链接: ", err)
-	}
-	//检测数据库链接是否任然有效，否则打印错误信息
+	// 迁移 User 表
+	db.AutoMigrate(&User{})
 
-	defer func(db *sql.DB) {
-		err := db.Close()
-		if err != nil {
-			log.Println("Error closing database connection:", err)
-		}
-	}(db) //延迟函数。断开数据库链接
-
-	//创建路由引擎
 	r := gin.Default()
-	r.LoadHTMLGlob("static/*") //模板引擎
+	r.LoadHTMLGlob("static/*")      // 模板引擎
+	r.Static("/static", "./static") // 设置静态文件服务器
 
-	//设置静态文件服务器，客户端发起以/static开头的url请求时，Gin从./static目录查找相应文件
-	r.Static("/static", "./static")
-
-	//设置路由处理器
+	// 登录路由处理器
 	r.POST("/login", func(c *gin.Context) {
 		var user User
 		username := c.PostForm("username")
 		password := c.PostForm("password")
 
-		err := db.QueryRow("SELECT username, password FROM users WHERE username = ?", username).Scan(&user.Username, &user.Password)
-		if err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
+		// 使用 GORM 查询用户
+		if err := db.Where("username = ?", username).First(&user).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
 				c.HTML(http.StatusOK, "error.html", gin.H{"error": "用户不存在"})
 			} else {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "数据库查询失败"})
 			}
 			return
 		}
+
+		// 检查密码是否匹配
 		if user.Password != password {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "密码错误"})
-			return
+		} else {
+			c.Redirect(http.StatusFound, "/static/blog.html")
 		}
-
-		c.Redirect(http.StatusFound, "/static/blog.html")
 	})
 
 	r.POST("/register", func(c *gin.Context) {
@@ -75,39 +67,34 @@ func main() {
 		}
 
 		var user User
-		err := db.QueryRow("SELECT username FROM users WHERE username = ?", username).Scan(&user.Username)
-		if err == nil {
+		// 检查用户名是否已存在
+		if err := db.Where("username = ?", username).First(&user).Error; err == nil {
 			c.JSON(http.StatusConflict, gin.H{"error": "用户已存在"})
 			return
 		}
-		if !errors.Is(err, sql.ErrNoRows) {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "数据库查询失败"})
-			return
-		}
 
-		_, err = db.Exec("INSERT INTO users (username, password) VALUES (?, ?)", username, password)
-		if err != nil {
+		// 创建新用户
+		if err := db.Create(&User{Username: username, Password: password}).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "注册失败"})
 			return
 		}
-
 		c.JSON(http.StatusOK, gin.H{"message": "注册成功"})
 	})
 
+	// 重置密码路由处理器
 	r.POST("/reset-password", func(c *gin.Context) {
 		username := c.PostForm("username")
-		password := c.PostForm("newPassword")
+		newPassword := c.PostForm("newPassword")
 		confirmPassword := c.PostForm("confirmPassword")
 
-		if password != confirmPassword {
+		if newPassword != confirmPassword {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "密码不一致"})
 			return
 		}
 
 		var user User
-		err := db.QueryRow("SELECT username FROM users WHERE username = ?", username).Scan(&user.Username)
-		if err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
+		if err := db.Where("username = ?", username).First(&user).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
 				c.JSON(http.StatusNotFound, gin.H{"error": "用户不存在"})
 			} else {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "数据库错误"})
@@ -115,20 +102,17 @@ func main() {
 			return
 		}
 
-		_, err = db.Exec("UPDATE users SET password = ? WHERE username = ?", password, username)
-		if err != nil {
+		// 更新密码
+		if err := db.Model(&user).Updates(map[string]interface{}{"password": newPassword}).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "更新密码失败"})
 			return
 		}
-
 		c.JSON(http.StatusOK, gin.H{"message": "密码重置成功"})
-
 	})
 
-	//启动服务器
+	// 启动服务器
 	log.Println("Server starting on port 8080...")
-	err = r.Run(":8080")
-	if err != nil {
-		return
+	if err := r.Run(":8080"); err != nil {
+		log.Fatal("server run failed: ", err)
 	}
 }
