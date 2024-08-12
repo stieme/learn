@@ -57,12 +57,12 @@ func main() {
 
 			// 直接比较明文密码，数据库中是明文，错误就显示无效密码
 			if user.Password != password {
-				http.Error(w, "无效密码/密码有误.", http.StatusUnauthorized)
+				http.Error(w, "无效密码/密码有误.", http.StatusUnauthorized) //401，凭证不行
 				return
 			}
 
 			// 登录成功，重定向到博客页面
-			http.Redirect(w, r, "/static/blog.html", http.StatusFound)
+			http.Redirect(w, r, "/static/blog.html", http.StatusFound) //302，重定向响应
 		} else {
 			// 如果不是 POST 请求，显示登录表单
 			http.ServeFile(w, r, "/static/login.html") // 修改为正确的路径
@@ -74,11 +74,11 @@ func main() {
 			r.ParseForm()
 			username := r.FormValue("username")
 			password := r.FormValue("password")
-			confirm_password := r.FormValue("confirm_password")
+			confirmPassword := r.FormValue("confirm_password")
 
 			// 确保两次输入的密码相同
-			if password != confirm_password {
-				http.Error(w, "密码错误", http.StatusBadRequest)
+			if password != confirmPassword {
+				http.Error(w, "密码错误", http.StatusBadRequest) //400，有误
 				return
 			}
 
@@ -87,12 +87,12 @@ func main() {
 			err := db.QueryRow("SELECT username FROM users WHERE username = ?", username).Scan(&user.Username)
 			if err == nil {
 				// 用户名已存在
-				http.Error(w, "用户已经存在", http.StatusConflict)
+				http.Error(w, "用户已经存在", http.StatusConflict) //409,用于指示客户端的请求由于与服务器上的资源状态冲突而无法完成
 				return
 			}
 			if !errors.Is(err, sql.ErrNoRows) {
 				// 数据库查询出错
-				http.Error(w, "数据库出错", http.StatusInternalServerError)
+				http.Error(w, "数据库出错", http.StatusInternalServerError) //500，服务器错误
 				return
 			}
 
@@ -100,14 +100,54 @@ func main() {
 			_, err = db.Exec("INSERT INTO users (username, password) VALUES (?, ?)", username, password) //插入数据
 			if err != nil {
 				// 处理错误，例如返回错误信息给客户端
-				http.Error(w, "联网服务错误", http.StatusInternalServerError)
+				http.Error(w, "联网服务错误", http.StatusInternalServerError) //500，服务器错误
 				return
 			}
 
-			http.Redirect(w, r, "/static/index.html", http.StatusFound)
+			http.Redirect(w, r, "/static/index.html", http.StatusFound) //302，重定向
 		}
 	})
 
+	http.HandleFunc("/reset-password", func(w http.ResponseWriter, r *http.Request) {
+		r.ParseForm()
+		username := r.FormValue("username")
+		password := r.FormValue("newPassword")
+		confirmPassword := r.FormValue("confirmPassword")
+
+		if password != confirmPassword {
+			http.Error(w, "密码不一致", http.StatusUnauthorized) //401,无有效身份凭证依据
+		}
+
+		var user User
+		err := db.QueryRow("SELECT username FROM users WHERE username = ?", username).Scan(&user.Username)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				http.Error(w, "用户不存在", http.StatusNotFound) //404
+			} else {
+				http.Error(w, "数据库错误", http.StatusInternalServerError) //500
+			}
+		}
+
+		// 执行密码更新操作
+		res, err := db.Exec("UPDATE users SET password = ? WHERE username = ?", password, username)
+		if err != nil {
+			http.Error(w, "更新密码失败", http.StatusInternalServerError) //500
+		}
+
+		// 检查是否实际有行被更新
+		rowsAffected, err := res.RowsAffected()
+		if err != nil {
+			http.Error(w, "无法确定更新操作是否成功", http.StatusInternalServerError) //500
+		}
+		if rowsAffected == 0 {
+			http.Error(w, "没有找到用户，无法更新密码", http.StatusNotFound) //404
+		}
+
+		// 密码更新成功，写入成功消息
+		w.WriteHeader(http.StatusOK) //200
+		w.Write([]byte("密码已经重置成功"))
+
+	})
 	// 启动服务器
 	log.Println("Server starting on port 8080...")
 	http.ListenAndServe(":8080", nil) //监听服务8080 端口

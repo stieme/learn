@@ -2,76 +2,85 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Forgot Password Page</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Password Reset</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f7f7f7;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
             margin: 0;
         }
-        .forgot-container {
+        .container {
             background-color: white;
-            padding: 20px;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
         }
         .form-input {
-            margin-bottom: 10px;
+            margin-bottom: 20px;
         }
         .form-input label {
             display: block;
             margin-bottom: 5px;
+            color: #666;
         }
         .form-input input {
-            width: 100%;
+            width: calc(100% - 22px);
             padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
             box-sizing: border-box;
         }
         .form-input input[type="submit"] {
-            background-color: #5cb85c;
+            background-color: #6a82fb;
             color: white;
             border: none;
+            padding: 10px;
             cursor: pointer;
+            transition: background-color 0.3s ease;
+            border-radius: 6px;
         }
         .form-input input[type="submit"]:hover {
-            background-color: #4cae4c;
+            background-color: #556bf6;
         }
-        .additional-links {
-            text-align: center;
-            margin-top: 15px;
-            font-size: 0.85em;
-        }
-        .additional-links a {
-            color: #5cb85c;
-            text-decoration: none;
-        }
-        .additional-links a:hover {
-            text-decoration: underline;
+        p {
+            color: #666;
+            font-size: 0.9em;
         }
     </style>
 </head>
 <body>
-<div class="forgot-container">
-    <h2>Forgot Your Password?</h2>
-    <p>Enter your username to receive a password reset link.</p>
-    <form action="/forgot-password" method="post">
+<div class="container">
+    <h2>Reset Password</h2>
+    <p>Please enter your username and set a new password.</p>
+    <form action="/reset-password" method="post">
         <div class="form-input">
             <label for="username">Username</label>
             <input type="text" id="username" name="username" required>
         </div>
         <div class="form-input">
-            <input type="submit" value="Send Reset Link">
+            <label for="newPassword">New Password</label>
+            <input type="password" id="newPassword" name="newPassword" required>
+        </div>
+        <div class="form-input">
+            <label for="confirmPassword">Confirm Password</label>
+            <input type="password" id="confirmPassword" name="confirmPassword" required>
+        </div>
+        <div class="form-input">
+            <input type="submit" value="Set Password">
         </div>
     </form>
-    <div class="additional-links">
-        <a href="index.html">Return to Login</a>
-    </div>
 </div>
 </body>
 </html>
