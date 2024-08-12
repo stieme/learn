@@ -36,6 +36,7 @@ func main() {
 
 	//创建路由引擎
 	r := gin.Default()
+	r.LoadHTMLGlob("static/*") //模板引擎
 
 	//设置静态文件服务器，客户端发起以/static开头的url请求时，Gin从./static目录查找相应文件
 	r.Static("/static", "./static")
@@ -49,7 +50,7 @@ func main() {
 		err := db.QueryRow("SELECT username, password FROM users WHERE username = ?", username).Scan(&user.Username, &user.Password)
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
-				c.JSON(http.StatusNotFound, gin.H{"error": "用户不存在"})
+				c.HTML(http.StatusOK, "error.html", gin.H{"error": "用户不存在"})
 			} else {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "数据库查询失败"})
 			}
